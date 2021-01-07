@@ -49,7 +49,7 @@ spec:
       // You might want to break this into multiple stages
       steps {
         // Get our git repo
-        git 'https://github.com/silborynirmata/jekins-example.git'
+        git 'https://github.com/nirmata-add-ons/jekins-example.git'
         //
         sh "/kaniko/executor --context `pwd` --destination ${DOCKER_REPO}:${env.BUILD_ID}"
         sh "sed  s/:latest/:${env.BUILD_ID}/ -i ${YAML_FILE}"
