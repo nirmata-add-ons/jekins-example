@@ -56,7 +56,7 @@ spec:
       // You might want to break this into multiple stages
       steps {
         // Get our git repo
-        git 'https://github.com/silborynirmata/jekins-example.git'
+        git 'https://github.com/nirmata-add-ons/jekins-example.git'
         // Build container
         sh "img build . -t ${DOCKER_REPO}:${env.BUILD_ID}"
         // You can also auth like this instead of the docker secret.
