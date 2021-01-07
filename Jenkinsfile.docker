@@ -1,0 +1,45 @@
+pipeline {
+  agent any
+  environment {
+      // Grab our Nirmata Token from Jenkins creds
+      NIRMATA_TOKEN     = credentials('NIRMATA_TOKEN')
+      // This needs to be changed if you are using Nirmata PE
+      NIRMATA_URL       = 'https://nirmata.io'
+      // This should be your locally cached copy
+      NCTL_URL          = 'https://nirmata-downloads.s3.us-east-2.amazonaws.com/nctl/nctl_3.1.0-rc2/nctl_3.1.0-rc2_linux_64-bit.zip'
+      // The rest should changed to your app and repo.
+      DOCKER_REPO       = 'ssilbory/alpine-tomcat'
+      APP_NAME          = 'alpine-tomcat'
+      ENV_NAME          = 'tomcat'
+      YAML_FILE         = 'tomcat.yaml'
+  }
+  stages {
+    stage('Build with docker') {
+      // You might want to break this into multiple stages
+      steps {
+        // Get our git repo
+        git 'https://github.com/silborynirmata/jekins-example.git'
+        // Can you actually run docker this requires a vm or DiD
+        // DiD == Bad Idea
+        sh "docker build ${DOCKER_REPO}:${env.BUILD_ID}"
+        // Be sure to auth
+        sh "docker push ${DOCKER_REPO}:${env.BUILD_ID}"
+        sh "sed  s/:latest/:${env.BUILD_ID}/ -i ${YAML_FILE}"
+        // Update app. Be sure the enviroment and app exist
+        sh '''if command -v nctl ;then
+                nctl environments apps apply ${APP_NAME} -e ${ENV_NAME} -f ${YAML_FILE}
+              else
+                if [ -f nctl ];then
+                  chmod +x nctl
+                else
+                  wget -O nctl.zip ${NCTL_URL}
+                  unzip -o nctl.zip
+                  chmod 500 nctl
+                fi
+                # Your app must exist in Nirmata
+                ./nctl environments apps apply ${APP_NAME} -e ${ENV_NAME} -f ${YAML_FILE}
+              fi'''
+      }
+    }
+  }
+}
